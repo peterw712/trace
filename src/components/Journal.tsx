@@ -60,14 +60,6 @@ export default function Journal({
   )
 
   useEffect(() => {
-    const nextEntries = loadEntries(userId)
-    setEntries(nextEntries)
-    setActiveDate(getTodayISO())
-    setDraft(createDraft(getTodayISO(), nextEntries.find((entry) => entry.dateISO === getTodayISO())))
-    setStatus('All changes saved')
-  }, [userId])
-
-  useEffect(() => {
     let isMounted = true
     setStatus('Syncing...')
     fetchEntries(userId)
@@ -75,7 +67,12 @@ export default function Journal({
         if (!isMounted) return
         setEntries(fetched)
         setActiveDate(getTodayISO())
-        setDraft(createDraft(getTodayISO(), fetched.find((entry) => entry.dateISO === getTodayISO())))
+        setDraft(
+          createDraft(
+            getTodayISO(),
+            fetched.find((entry: Entry) => entry.dateISO === getTodayISO()),
+          ),
+        )
         setStatus('All changes saved')
       })
       .catch(() => {
