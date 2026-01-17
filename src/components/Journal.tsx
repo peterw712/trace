@@ -1,13 +1,12 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { deleteEntryRemote, fetchEntries, upsertEntriesRemote, upsertEntryRemote } from '../lib/entries'
 import {
   type Entry,
   entryMatches,
-  loadEntries,
   mergeEntriesByDate,
   parseEntriesJson,
-  saveEntries,
   sortEntries,
-  upsertEntry,
+  upsertEntryLocal,
 } from '../lib/storage'
 
 const DEBOUNCE_MS = 500
@@ -42,15 +41,10 @@ export default function Journal({
   theme,
   onToggleTheme,
 }: JournalProps) {
-  const [entries, setEntries] = useState<Entry[]>(() => loadEntries(userId))
+  const [entries, setEntries] = useState<Entry[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeDate, setActiveDate] = useState(getTodayISO())
-  const [draft, setDraft] = useState<Entry>(() =>
-    createDraft(
-      getTodayISO(),
-      loadEntries(userId).find((entry) => entry.dateISO === getTodayISO()),
-    ),
-  )
+  const [draft, setDraft] = useState<Entry>(() => createDraft(getTodayISO()))
   const [status, setStatus] = useState('All changes saved')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -74,6 +68,26 @@ export default function Journal({
   }, [userId])
 
   useEffect(() => {
+    let isMounted = true
+    setStatus('Syncing...')
+    fetchEntries(userId)
+      .then((fetched) => {
+        if (!isMounted) return
+        setEntries(fetched)
+        setActiveDate(getTodayISO())
+        setDraft(createDraft(getTodayISO(), fetched.find((entry) => entry.dateISO === getTodayISO())))
+        setStatus('All changes saved')
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setStatus('Sync failed. Check connection.')
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [userId])
+
+  useEffect(() => {
     const existing = entries.find((entry) => entry.dateISO === activeDate)
     setDraft(createDraft(activeDate, existing))
     setStatus('All changes saved')
@@ -87,17 +101,25 @@ export default function Journal({
     }
 
     setStatus('Saving...')
+    let isCancelled = false
     const handle = window.setTimeout(() => {
       const nextEntry = { ...draft, updatedAt: Date.now() }
-      setEntries((prev) => {
-        const nextEntries = upsertEntry(prev, nextEntry)
-        saveEntries(userId, nextEntries)
-        return nextEntries
-      })
-      setStatus('All changes saved')
+      void upsertEntryRemote(userId, nextEntry)
+        .then((saved) => {
+          if (isCancelled) return
+          setEntries((prev) => upsertEntryLocal(prev, saved))
+          setStatus('All changes saved')
+        })
+        .catch(() => {
+          if (isCancelled) return
+          setStatus('Sync failed. Check connection.')
+        })
     }, DEBOUNCE_MS)
 
-    return () => window.clearTimeout(handle)
+    return () => {
+      isCancelled = true
+      window.clearTimeout(handle)
+    }
   }, [draft.title, draft.body, draft.dateISO, userId])
 
   const handlePickDate = (value: string) => {
@@ -118,13 +140,16 @@ export default function Journal({
   }
 
   const handleDelete = () => {
-    setEntries((prev) => {
-      const nextEntries = prev.filter((entry) => entry.dateISO !== activeDate)
-      saveEntries(userId, nextEntries)
-      return nextEntries
-    })
-    setDraft(createDraft(activeDate))
-    setStatus('Entry deleted.')
+    setStatus('Deleting...')
+    void deleteEntryRemote(userId, activeDate)
+      .then(() => {
+        setEntries((prev) => prev.filter((entry) => entry.dateISO !== activeDate))
+        setDraft(createDraft(activeDate))
+        setStatus('Entry deleted.')
+      })
+      .catch(() => {
+        setStatus('Delete failed. Check connection.')
+      })
   }
 
   const handleExport = () => {
@@ -151,12 +176,14 @@ export default function Journal({
       setStatus('Import failed: no entries found.')
       return
     }
-    setEntries((prev) => {
-      const merged = mergeEntriesByDate(prev, imported)
-      saveEntries(userId, merged)
-      return merged
-    })
-    setStatus(`Imported ${imported.length} entr${imported.length === 1 ? 'y' : 'ies'}.`)
+    setStatus('Importing...')
+    try {
+      const saved = await upsertEntriesRemote(userId, imported)
+      setEntries((prev) => mergeEntriesByDate(prev, saved))
+      setStatus(`Imported ${saved.length} entr${saved.length === 1 ? 'y' : 'ies'}.`)
+    } catch {
+      setStatus('Import failed. Check connection.')
+    }
     event.target.value = ''
   }
 

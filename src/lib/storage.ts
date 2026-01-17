@@ -6,16 +6,28 @@ export type Entry = {
   updatedAt: number
 }
 
-const ENTRIES_KEY_PREFIX = 'trace_entries'
+type RawEntry = Partial<Entry> & {
+  date?: string
+  updated_at?: string
+}
 
-const getEntriesKey = (userId: string) => `${ENTRIES_KEY_PREFIX}:${userId}`
-
-const normalizeEntry = (raw: Partial<Entry>): Entry | null => {
-  if (!raw.dateISO || typeof raw.dateISO !== 'string') return null
-  const dateISO = raw.dateISO.slice(0, 10)
+const normalizeEntry = (raw: RawEntry): Entry | null => {
+  const dateValue =
+    typeof raw.dateISO === 'string'
+      ? raw.dateISO
+      : typeof raw.date === 'string'
+        ? raw.date
+        : null
+  if (!dateValue) return null
+  const dateISO = dateValue.slice(0, 10)
   const title = typeof raw.title === 'string' ? raw.title : ''
   const body = typeof raw.body === 'string' ? raw.body : ''
-  const updatedAt = typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now()
+  const updatedAt =
+    typeof raw.updatedAt === 'number'
+      ? raw.updatedAt
+      : typeof raw.updated_at === 'string'
+        ? Date.parse(raw.updated_at) || Date.now()
+        : Date.now()
   return {
     id: raw.id && typeof raw.id === 'string' ? raw.id : crypto.randomUUID(),
     dateISO,
@@ -25,24 +37,11 @@ const normalizeEntry = (raw: Partial<Entry>): Entry | null => {
   }
 }
 
-export function loadEntries(userId: string): Entry[] {
-  const raw = localStorage.getItem(getEntriesKey(userId))
-  if (!raw) return []
-  try {
-    const entries = JSON.parse(raw) as Entry[]
-    return Array.isArray(entries) ? entries : []
-  } catch {
-    return []
-  }
-}
-
-export function saveEntries(userId: string, entries: Entry[]): void {
-  localStorage.setItem(getEntriesKey(userId), JSON.stringify(entries))
-}
-
-export function upsertEntry(entries: Entry[], entry: Entry): Entry[] {
+export function upsertEntryLocal(entries: Entry[], entry: Entry): Entry[] {
   const next = [...entries]
-  const index = next.findIndex((item) => item.id === entry.id)
+  const index = next.findIndex(
+    (item) => item.id === entry.id || item.dateISO === entry.dateISO,
+  )
   if (index >= 0) {
     next[index] = entry
   } else {
