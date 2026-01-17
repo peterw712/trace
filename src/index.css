@@ -1,0 +1,254 @@
+:root {
+  color-scheme: light;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #111827;
+  background: #f9fafb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+button {
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input,
+textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  background: white;
+}
+
+textarea {
+  min-height: 300px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.kicker {
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 6px;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(420px, 100%);
+  background: white;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  display: grid;
+  gap: 20px;
+}
+
+.auth-card h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+}
+
+.auth-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-fields label {
+  display: grid;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.primary {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+.link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #2563eb;
+}
+
+.error {
+  color: #dc2626;
+  margin: 0;
+}
+
+.journal-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  display: grid;
+  gap: 24px;
+}
+
+.journal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-input {
+  display: none;
+}
+
+.date-controls {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.date-controls label {
+  display: grid;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.journal-body {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+}
+
+.journal-sidebar {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  gap: 12px;
+}
+
+.journal-sidebar label {
+  display: grid;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.entry-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.entry {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #f9fafb;
+  text-align: left;
+}
+
+.entry.active {
+  border-color: #111827;
+  background: #eef2ff;
+}
+
+.editor {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.danger {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.empty {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .journal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .date-controls {
+    justify-items: start;
+  }
+
+  .journal-body {
+    grid-template-columns: 1fr;
+  }
+}
