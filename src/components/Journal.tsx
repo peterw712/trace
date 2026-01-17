@@ -15,6 +15,7 @@ const DEBOUNCE_MS = 500
 type JournalProps = {
   appTitle: string
   username: string
+  userId: string
   onLogout: () => void
   theme: 'light' | 'dark'
   onToggleTheme: () => void
@@ -36,15 +37,19 @@ const createDraft = (dateISO: string, existing?: Entry): Entry => {
 export default function Journal({
   appTitle,
   username,
+  userId,
   onLogout,
   theme,
   onToggleTheme,
 }: JournalProps) {
-  const [entries, setEntries] = useState<Entry[]>(() => loadEntries())
+  const [entries, setEntries] = useState<Entry[]>(() => loadEntries(userId))
   const [searchQuery, setSearchQuery] = useState('')
   const [activeDate, setActiveDate] = useState(getTodayISO())
   const [draft, setDraft] = useState<Entry>(() =>
-    createDraft(getTodayISO(), loadEntries().find((entry) => entry.dateISO === getTodayISO())),
+    createDraft(
+      getTodayISO(),
+      loadEntries(userId).find((entry) => entry.dateISO === getTodayISO()),
+    ),
   )
   const [status, setStatus] = useState('All changes saved')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -59,6 +64,14 @@ export default function Journal({
     () => sortedEntries.findIndex((entry) => entry.dateISO === activeDate),
     [sortedEntries, activeDate],
   )
+
+  useEffect(() => {
+    const nextEntries = loadEntries(userId)
+    setEntries(nextEntries)
+    setActiveDate(getTodayISO())
+    setDraft(createDraft(getTodayISO(), nextEntries.find((entry) => entry.dateISO === getTodayISO())))
+    setStatus('All changes saved')
+  }, [userId])
 
   useEffect(() => {
     const existing = entries.find((entry) => entry.dateISO === activeDate)
@@ -78,14 +91,14 @@ export default function Journal({
       const nextEntry = { ...draft, updatedAt: Date.now() }
       setEntries((prev) => {
         const nextEntries = upsertEntry(prev, nextEntry)
-        saveEntries(nextEntries)
+        saveEntries(userId, nextEntries)
         return nextEntries
       })
       setStatus('All changes saved')
     }, DEBOUNCE_MS)
 
     return () => window.clearTimeout(handle)
-  }, [draft.title, draft.body, draft.dateISO])
+  }, [draft.title, draft.body, draft.dateISO, userId])
 
   const handlePickDate = (value: string) => {
     if (!value) return
@@ -107,7 +120,7 @@ export default function Journal({
   const handleDelete = () => {
     setEntries((prev) => {
       const nextEntries = prev.filter((entry) => entry.dateISO !== activeDate)
-      saveEntries(nextEntries)
+      saveEntries(userId, nextEntries)
       return nextEntries
     })
     setDraft(createDraft(activeDate))
@@ -140,7 +153,7 @@ export default function Journal({
     }
     setEntries((prev) => {
       const merged = mergeEntriesByDate(prev, imported)
-      saveEntries(merged)
+      saveEntries(userId, merged)
       return merged
     })
     setStatus(`Imported ${imported.length} entr${imported.length === 1 ? 'y' : 'ies'}.`)

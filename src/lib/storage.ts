@@ -6,7 +6,9 @@ export type Entry = {
   updatedAt: number
 }
 
-const ENTRIES_KEY = 'trace_entries'
+const ENTRIES_KEY_PREFIX = 'trace_entries'
+
+const getEntriesKey = (userId: string) => `${ENTRIES_KEY_PREFIX}:${userId}`
 
 const normalizeEntry = (raw: Partial<Entry>): Entry | null => {
   if (!raw.dateISO || typeof raw.dateISO !== 'string') return null
@@ -23,8 +25,8 @@ const normalizeEntry = (raw: Partial<Entry>): Entry | null => {
   }
 }
 
-export function loadEntries(): Entry[] {
-  const raw = localStorage.getItem(ENTRIES_KEY)
+export function loadEntries(userId: string): Entry[] {
+  const raw = localStorage.getItem(getEntriesKey(userId))
   if (!raw) return []
   try {
     const entries = JSON.parse(raw) as Entry[]
@@ -34,8 +36,8 @@ export function loadEntries(): Entry[] {
   }
 }
 
-export function saveEntries(entries: Entry[]): void {
-  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
+export function saveEntries(userId: string, entries: Entry[]): void {
+  localStorage.setItem(getEntriesKey(userId), JSON.stringify(entries))
 }
 
 export function upsertEntry(entries: Entry[], entry: Entry): Entry[] {

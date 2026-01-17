@@ -12,6 +12,7 @@ type ThemeMode = 'light' | 'dark'
 export default function App() {
   const [mode, setMode] = useState<AuthMode>('login')
   const [session, setSession] = useState<Session | null>(null)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -28,10 +29,14 @@ export default function App() {
   useEffect(() => {
     let isMounted = true
     supabase.auth.getSession().then(({ data }) => {
-      if (isMounted) setSession(data.session ?? null)
+      if (isMounted) {
+        setSession(data.session ?? null)
+        setIsCheckingSession(false)
+      }
     })
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
+      setIsCheckingSession(false)
     })
     return () => {
       isMounted = false
@@ -75,11 +80,22 @@ export default function App() {
     }
   }
 
+  if (isCheckingSession) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card">
+          <p className="muted">Checking session…</p>
+        </div>
+      </div>
+    )
+  }
+
   if (session) {
     return (
       <Journal
         appTitle={APP_TITLE}
         username={session.user.email ?? 'User'}
+        userId={session.user.id}
         onLogout={handleLogout}
         theme={theme}
         onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -95,8 +111,8 @@ export default function App() {
           <h1>{APP_TITLE}</h1>
           <p className="muted">
             {mode === 'register'
-              ? 'Create a local-only account to unlock your journal.'
-              : 'Log in to your local journal.'}
+              ? 'Create an account to unlock your journal.'
+              : 'Sign in to your journal.'}
           </p>
           <button
             type="button"
