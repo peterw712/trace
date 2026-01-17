@@ -3,6 +3,34 @@
   font-family: 'Inter', system-ui, sans-serif;
   color: #111827;
   background: #f9fafb;
+  --bg: #f9fafb;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --input-border: #d1d5db;
+  --accent: #111827;
+  --accent-contrast: #ffffff;
+  --accent-soft: #eef2ff;
+  --danger-bg: #fee2e2;
+  --danger-border: #fecaca;
+  --danger-text: #b91c1c;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0f172a;
+  --panel: #111827;
+  --text: #f9fafb;
+  --muted: #94a3b8;
+  --border: #1f2937;
+  --input-border: #334155;
+  --accent: #38bdf8;
+  --accent-contrast: #0f172a;
+  --accent-soft: #0b2a3a;
+  --danger-bg: #3f1d1d;
+  --danger-border: #7f1d1d;
+  --danger-text: #fecaca;
 }
 
 * {
@@ -11,6 +39,8 @@
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
 }
 
 button,
@@ -21,8 +51,9 @@ textarea {
 }
 
 button {
-  border: 1px solid #d1d5db;
-  background: white;
+  border: 1px solid var(--input-border);
+  background: var(--panel);
+  color: var(--text);
   padding: 8px 14px;
   border-radius: 10px;
   cursor: pointer;
@@ -35,11 +66,12 @@ button:disabled {
 
 input,
 textarea {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   padding: 10px 12px;
   width: 100%;
-  background: white;
+  background: var(--panel);
+  color: var(--text);
 }
 
 textarea {
@@ -49,14 +81,14 @@ textarea {
 }
 
 .muted {
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .kicker {
   letter-spacing: 0.2em;
   font-size: 12px;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--muted);
   margin: 0 0 6px;
 }
 
@@ -69,12 +101,17 @@ textarea {
 
 .auth-card {
   width: min(420px, 100%);
-  background: white;
+  background: var(--panel);
   border-radius: 18px;
   padding: 32px;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
   display: grid;
   gap: 20px;
+}
+
+.auth-header {
+  display: grid;
+  gap: 10px;
 }
 
 .auth-card h1 {
@@ -94,20 +131,25 @@ textarea {
 }
 
 .primary {
-  background: #111827;
-  color: white;
-  border-color: #111827;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
 }
 
 .link {
   background: transparent;
   border: none;
   padding: 0;
-  color: #2563eb;
+  color: var(--accent);
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--border);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--danger-text);
   margin: 0;
 }
 
@@ -160,10 +202,10 @@ textarea {
 }
 
 .journal-sidebar {
-  background: white;
+  background: var(--panel);
   padding: 16px;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   display: grid;
   gap: 12px;
 }
@@ -187,19 +229,19 @@ textarea {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid transparent;
-  background: #f9fafb;
+  background: var(--bg);
   text-align: left;
 }
 
 .entry.active {
-  border-color: #111827;
-  background: #eef2ff;
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .editor {
-  background: white;
+  background: var(--panel);
   border-radius: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   padding: 20px;
   display: grid;
   gap: 16px;
@@ -219,9 +261,9 @@ textarea {
 }
 
 .danger {
-  background: #fee2e2;
-  border-color: #fecaca;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .title {
@@ -231,7 +273,7 @@ textarea {
 
 .status {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .empty {

@@ -16,6 +16,8 @@ type JournalProps = {
   appTitle: string
   username: string
   onLogout: () => void
+  theme: 'light' | 'dark'
+  onToggleTheme: () => void
 }
 
 const getTodayISO = () => new Date().toISOString().slice(0, 10)
@@ -31,7 +33,13 @@ const createDraft = (dateISO: string, existing?: Entry): Entry => {
   }
 }
 
-export default function Journal({ appTitle, username, onLogout }: JournalProps) {
+export default function Journal({
+  appTitle,
+  username,
+  onLogout,
+  theme,
+  onToggleTheme,
+}: JournalProps) {
   const [entries, setEntries] = useState<Entry[]>(() => loadEntries())
   const [searchQuery, setSearchQuery] = useState('')
   const [activeDate, setActiveDate] = useState(getTodayISO())
@@ -161,6 +169,9 @@ export default function Journal({ appTitle, username, onLogout }: JournalProps) 
             accept="application/json"
             onChange={handleImport}
           />
+          <button type="button" className="ghost" onClick={onToggleTheme}>
+            {theme === 'light' ? 'Dark mode' : 'Light mode'}
+          </button>
           <button type="button" className="primary" onClick={onLogout}>
             Logout
           </button>
