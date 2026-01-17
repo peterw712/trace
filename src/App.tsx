@@ -9,6 +9,8 @@ const APP_TITLE = 'Trace Journal'
 const THEME_KEY = 'trace_theme'
 type ThemeMode = 'light' | 'dark'
 
+const getRedirectTo = () => new URL(import.meta.env.BASE_URL, window.location.origin).toString()
+
 export default function App() {
   const [mode, setMode] = useState<AuthMode>('login')
   const [session, setSession] = useState<Session | null>(null)
@@ -62,6 +64,9 @@ export default function App() {
       const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: getRedirectTo(),
+        },
       })
       if (signUpError) {
         setError(signUpError.message)
