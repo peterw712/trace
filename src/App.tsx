@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Journal from './components/Journal'
-import { type UserRecord, getUserRecord, hashPassword, setUserRecord } from './lib/auth'
+import { supabase } from './lib/supabase'
+import { type Session } from '@supabase/supabase-js'
 
 type AuthMode = 'login' | 'register'
 
@@ -8,16 +9,10 @@ const APP_TITLE = 'Trace Journal'
 const THEME_KEY = 'trace_theme'
 type ThemeMode = 'light' | 'dark'
 
-function hashMatches(input: string, user: UserRecord): boolean {
-  return user.passwordHash === hashPassword(input, user.salt)
-}
-
 export default function App() {
-  const existingUser = useMemo(() => getUserRecord(), [])
-  const [user, setUser] = useState<UserRecord | null>(existingUser)
-  const [mode, setMode] = useState<AuthMode>(existingUser ? 'login' : 'register')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [username, setUsername] = useState('')
+  const [mode, setMode] = useState<AuthMode>('login')
+  const [session, setSession] = useState<Session | null>(null)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -30,50 +25,61 @@ export default function App() {
     localStorage.setItem(THEME_KEY, theme)
   }, [theme])
 
+  useEffect(() => {
+    let isMounted = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (isMounted) setSession(data.session ?? null)
+    })
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+    })
+    return () => {
+      isMounted = false
+      data.subscription.unsubscribe()
+    }
+  }, [])
+
   const handleLogout = () => {
-    setIsAuthenticated(false)
+    supabase.auth.signOut()
     setPassword('')
-    setError('')
     setMode('login')
   }
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     setError('')
 
-    if (!username.trim() || !password) {
-      setError('Enter a username and password.')
+    if (!email.trim() || !password) {
+      setError('Enter an email and password.')
       return
     }
 
     if (mode === 'register') {
-      if (user) {
-        setError('An account already exists on this device.')
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      })
+      if (signUpError) {
+        setError(signUpError.message)
         return
       }
-      const newUser = setUserRecord(username.trim(), password)
-      setUser(newUser)
-      setIsAuthenticated(true)
+      setError('Check your email to confirm your account.')
       return
     }
 
-    if (!user) {
-      setError('No local account found. Please register first.')
-      return
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+    if (signInError) {
+      setError(signInError.message)
     }
-
-    if (username.trim() !== user.username || !hashMatches(password, user)) {
-      setError('Incorrect username or password.')
-      return
-    }
-
-    setIsAuthenticated(true)
   }
 
-  if (user && isAuthenticated) {
+  if (session) {
     return (
       <Journal
         appTitle={APP_TITLE}
-        username={user.username}
+        username={session.user.email ?? 'User'}
         onLogout={handleLogout}
         theme={theme}
         onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -102,12 +108,12 @@ export default function App() {
         </header>
         <div className="auth-fields">
           <label>
-            Username
+            Email
             <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              placeholder="you"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              placeholder="you@email.com"
             />
           </label>
           <label>
@@ -122,7 +128,7 @@ export default function App() {
           </label>
           {error ? <p className="error">{error}</p> : null}
           <button className="primary" type="button" onClick={handleAuth}>
-            {mode === 'register' ? 'Create account' : 'Login'}
+            {mode === 'register' ? 'Create account' : 'Sign in'}
           </button>
         </div>
         <footer>
